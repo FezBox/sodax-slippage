@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { IntentSlippageTable } from '@/components/IntentSlippageTable';
+import { CompactSlippageTable } from '@/components/CompactSlippageTable';
 import { SummaryCards } from '@/components/SummaryCards';
 
 export default function Home() {
@@ -50,7 +50,7 @@ export default function Home() {
         ) : (
           <>
             <SummaryCards stats={data?.stats} />
-            <IntentSlippageTable intents={data?.intents || []} />
+            <CompactSlippageTable intents={data?.intents || []} />
           </>
         )}
       </div>
