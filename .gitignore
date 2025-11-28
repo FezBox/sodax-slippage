@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+all_messages.txt
+recent_messages.json
+debug_fetch.ts
