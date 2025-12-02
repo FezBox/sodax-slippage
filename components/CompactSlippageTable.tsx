@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { format } from 'date-fns';
 import { clsx } from 'clsx';
+import { ExternalLink } from 'lucide-react';
 
 interface Intent {
     intentId: string;
@@ -32,9 +33,20 @@ function formatAmount(amount: string | number | undefined, maxDecimals = 6): str
     });
 }
 
-export function CompactSlippageTable({ intents }: { intents: Intent[] }) {
+export function CompactSlippageTable({ intents, explorerUrls }: { intents: Intent[], explorerUrls?: Record<string, string> }) {
     const [sortField, setSortField] = useState<SortField>('time');
     const [filterToken, setFilterToken] = useState('');
+
+    const getExplorerLink = (networkId?: string, txHash?: string) => {
+        if (!networkId || !txHash || !explorerUrls) return null;
+        const urlTemplate = explorerUrls[networkId];
+        if (!urlTemplate) return null;
+
+        if (urlTemplate.includes('{txHash}')) {
+            return urlTemplate.replace('{txHash}', txHash);
+        }
+        return urlTemplate + txHash;
+    };
 
     const sortedAndFiltered = useMemo(() => {
         let data = [...intents];
@@ -112,6 +124,9 @@ export function CompactSlippageTable({ intents }: { intents: Intent[] }) {
                             const isPositive = pct > 0;
                             const isNegative = pct < 0;
 
+                            const quoteTxLink = getExplorerLink(intent.quote?.networkId, intent.quote?.txHash);
+                            const fillTxLink = getExplorerLink(intent.fill?.networkId, intent.fill?.txHash);
+
                             return (
                                 <tr key={intent.intentId} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                                     {/* Time & Status */}
@@ -142,6 +157,11 @@ export function CompactSlippageTable({ intents }: { intents: Intent[] }) {
                                                     <span className="px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-[10px]">
                                                         {intent.quote.fromChain}
                                                     </span>
+                                                    {quoteTxLink && (
+                                                        <a href={quoteTxLink} target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-blue-500 transition-colors" title="View Source Transaction">
+                                                            <ExternalLink size={12} />
+                                                        </a>
+                                                    )}
                                                 </div>
                                                 <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 text-xs">
                                                     <span>To</span>
@@ -162,7 +182,14 @@ export function CompactSlippageTable({ intents }: { intents: Intent[] }) {
                                     <td className="px-4 py-3 align-top">
                                         {intent.fill ? (
                                             <div className="flex flex-col gap-1">
-                                                <div className="text-xs text-zinc-500">Filled Amount</div>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="text-xs text-zinc-500">Filled Amount</div>
+                                                    {fillTxLink && (
+                                                        <a href={fillTxLink} target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-blue-500 transition-colors" title="View Fill Transaction">
+                                                            <ExternalLink size={12} />
+                                                        </a>
+                                                    )}
+                                                </div>
                                                 <div className="font-mono font-medium text-zinc-900 dark:text-zinc-100">
                                                     {formatAmount(intent.fill.toAmount)} {intent.fill.toToken}
                                                 </div>

@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { format } from 'date-fns';
 import { clsx } from 'clsx';
+import { ExternalLink } from 'lucide-react';
 
 interface Intent {
     intentId: string;
@@ -17,9 +18,20 @@ interface Intent {
 
 type SortField = 'time' | 'absDiff' | 'pctDiff';
 
-export function IntentSlippageTable({ intents }: { intents: Intent[] }) {
+export function IntentSlippageTable({ intents, explorerUrls }: { intents: Intent[], explorerUrls?: Record<string, string> }) {
     const [sortField, setSortField] = useState<SortField>('time');
     const [filterToken, setFilterToken] = useState('');
+
+    const getExplorerLink = (networkId?: string, txHash?: string) => {
+        if (!networkId || !txHash || !explorerUrls) return null;
+        const urlTemplate = explorerUrls[networkId];
+        if (!urlTemplate) return null;
+
+        if (urlTemplate.includes('{txHash}')) {
+            return urlTemplate.replace('{txHash}', txHash);
+        }
+        return urlTemplate + txHash;
+    };
 
     const sortedAndFiltered = useMemo(() => {
         let data = [...intents];
@@ -99,6 +111,9 @@ export function IntentSlippageTable({ intents }: { intents: Intent[] }) {
                             const isPositive = pct > 0;
                             const isNegative = pct < 0;
 
+                            const quoteTxLink = getExplorerLink(intent.quote?.networkId, intent.quote?.txHash);
+                            const fillTxLink = getExplorerLink(intent.fill?.networkId, intent.fill?.txHash);
+
                             return (
                                 <tr key={intent.intentId} className="bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                                     <td className="px-4 py-3 whitespace-nowrap text-zinc-500">{dateStr}</td>
@@ -114,9 +129,16 @@ export function IntentSlippageTable({ intents }: { intents: Intent[] }) {
                                     </td>
                                     <td className="px-4 py-3">
                                         {intent.quote ? (
-                                            <div>
-                                                <span className="font-medium">{intent.quote.fromAmount} {intent.quote.fromToken}</span>
-                                                <span className="text-zinc-400 text-xs ml-1">({intent.quote.fromChain})</span>
+                                            <div className="flex items-center gap-2">
+                                                <div>
+                                                    <span className="font-medium">{intent.quote.fromAmount} {intent.quote.fromToken}</span>
+                                                    <span className="text-zinc-400 text-xs ml-1">({intent.quote.fromChain})</span>
+                                                </div>
+                                                {quoteTxLink && (
+                                                    <a href={quoteTxLink} target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-blue-500 transition-colors" title="View Source Transaction">
+                                                        <ExternalLink size={14} />
+                                                    </a>
+                                                )}
                                             </div>
                                         ) : '-'}
                                     </td>
@@ -130,9 +152,16 @@ export function IntentSlippageTable({ intents }: { intents: Intent[] }) {
                                     </td>
                                     <td className="px-4 py-3">
                                         {intent.fill ? (
-                                            <div>
-                                                <span className="font-medium">{intent.fill.toAmount} {intent.fill.toToken}</span>
-                                                <span className="text-zinc-400 text-xs ml-1">({intent.fill.toChain})</span>
+                                            <div className="flex items-center gap-2">
+                                                <div>
+                                                    <span className="font-medium">{intent.fill.toAmount} {intent.fill.toToken}</span>
+                                                    <span className="text-zinc-400 text-xs ml-1">({intent.fill.toChain})</span>
+                                                </div>
+                                                {fillTxLink && (
+                                                    <a href={fillTxLink} target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-blue-500 transition-colors" title="View Fill Transaction">
+                                                        <ExternalLink size={14} />
+                                                    </a>
+                                                )}
                                             </div>
                                         ) : <span className="text-zinc-300 italic">Pending...</span>}
                                     </td>

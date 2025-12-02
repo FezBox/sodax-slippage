@@ -4,8 +4,8 @@ import { SodaxMessageDetail } from './api';
 
 export interface PairedIntent {
     intentId: string; // sn
-    quote?: ParsedMessage & { timestamp: string; id: number };
-    fill?: ParsedMessage & { timestamp: string; id: number };
+    quote?: ParsedMessage & { timestamp: string; id: number; txHash?: string; networkId?: string };
+    fill?: ParsedMessage & { timestamp: string; id: number; txHash?: string; networkId?: string };
     status: 'pending' | 'filled' | 'orphan_fill';
     slippage?: {
         abs: string; // string for serialization
@@ -84,10 +84,24 @@ export class PairingService {
         }
 
         const intent = this.intents.get(intentId)!;
+
+        // Extract tx hash and network based on message type
+        let txHash = msg.src_tx_hash;
+        let networkId = msg.src_network;
+
+        if (parsed.type === 'fill') {
+            // For fills, we want the destination transaction
+            // Use dest_tx_hash/network if available, otherwise fall back to src (though likely incorrect for cross-chain)
+            if (msg.dest_tx_hash) txHash = msg.dest_tx_hash;
+            if (msg.dest_network) networkId = msg.dest_network;
+        }
+
         const msgData = {
             ...parsed,
             timestamp: msg.created_at,
             id: msg.id,
+            txHash,
+            networkId,
         };
 
         if (parsed.type === 'quote') {

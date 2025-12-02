@@ -33,6 +33,7 @@ export async function GET() {
         return NextResponse.json({
             stats,
             intents,
+            explorerUrls: SodaxApi.config.explorerUrls,
             lastUpdated: new Date().toISOString(),
         });
 

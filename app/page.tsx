@@ -50,7 +50,7 @@ export default function Home() {
         ) : (
           <>
             <SummaryCards stats={data?.stats} />
-            <CompactSlippageTable intents={data?.intents || []} />
+            <CompactSlippageTable intents={data?.intents || []} explorerUrls={data?.explorerUrls} />
           </>
         )}
       </div>

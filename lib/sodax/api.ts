@@ -5,6 +5,10 @@ export interface SodaxMessageSummary {
     sn: string;
     action_type: string;
     created_at: string;
+    src_tx_hash?: string;
+    src_network?: string;
+    dest_tx_hash?: string;
+    dest_network?: string;
 }
 
 export interface SodaxMessageDetail extends SodaxMessageSummary {
@@ -13,7 +17,12 @@ export interface SodaxMessageDetail extends SodaxMessageSummary {
 
 interface SodaxListResponse {
     data: SodaxMessageSummary[];
-    meta: any;
+    meta: {
+        urls?: {
+            tx: Record<string, string>;
+        };
+        [key: string]: any;
+    };
 }
 
 interface SodaxDetailResponse {
@@ -24,12 +33,20 @@ const BASE_URL = 'https://sodaxscan.com/api';
 
 export class SodaxApi {
     private static cache = new Map<number, SodaxMessageDetail>();
+    public static config = {
+        explorerUrls: {} as Record<string, string>,
+    };
 
     static async fetchLatestMessages(limit = 20): Promise<SodaxMessageSummary[]> {
         try {
             const response = await axios.get<SodaxListResponse>(`${BASE_URL}/messages`, {
                 params: { limit },
             });
+            
+            if (response.data.meta?.urls?.tx) {
+                this.config.explorerUrls = response.data.meta.urls.tx;
+            }
+
             return response.data.data;
         } catch (error) {
             console.error('Error fetching latest messages:', error);
